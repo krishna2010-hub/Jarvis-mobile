@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#07111f">
+<title>JARVIS — Mobile Assistant</title>
+<style>
+:root{color-scheme:dark;--cyan:#54e7ff;--muted:#91a9bd}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 5%,#123653 0,#07111f 48%,#030812 100%);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#eaf8ff;display:flex;justify-content:center}
+main{width:min(100%,560px);padding:24px 18px 34px}
+header{text-align:center;margin:12px 0 26px}
+.eyebrow{letter-spacing:.28em;color:var(--cyan);font-size:11px}
+h1{font-size:34px;letter-spacing:.16em;margin:8px 0 4px}
+.sub{color:var(--muted);font-size:13px}
+.orb-wrap{display:grid;place-items:center;margin:24px 0}
+.orb{width:170px;height:170px;border-radius:50%;border:1px solid #54e7ff88;display:grid;place-items:center;box-shadow:0 0 24px #19c9ff33,inset 0 0 32px #19c9ff22;position:relative;background:radial-gradient(circle,#1b5574 0,#0b233a 48%,#07111f 72%)}
+.orb:before,.orb:after{content:"";position:absolute;inset:-12px;border:1px solid #54e7ff55;border-radius:50%;animation:spin 12s linear infinite}
+.orb:after{inset:-23px;border-style:dashed;opacity:.5;animation-direction:reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.orb span{font-size:44px;color:var(--cyan);text-shadow:0 0 18px #54e7ff}
+.status{text-align:center;color:var(--cyan);font-size:13px;min-height:22px;margin-bottom:16px}
+.panel{background:#0b1a2acc;border:1px solid #54e7ff33;border-radius:18px;padding:16px;box-shadow:0 12px 36px #0005}
+.label{font-size:11px;color:var(--muted);letter-spacing:.15em;margin-bottom:8px}
+.reply{min-height:54px;line-height:1.5;font-size:15px;white-space:pre-wrap}
+.controls{display:flex;gap:10px;margin-top:14px}
+button,input{font:inherit}
+button{border:1px solid #54e7ff66;background:#10334b;color:#eaf8ff;border-radius:12px;padding:13px 15px;cursor:pointer}
+button:active{transform:scale(.98)}
+#listen{flex:1;background:linear-gradient(135deg,#0f536d,#12344e);font-weight:650}
+#listen.listening{background:#7c263b;border-color:#ff9ab0}
+form{display:flex;gap:8px;margin-top:14px}
+input{min-width:0;flex:1;background:#061321;border:1px solid #54e7ff44;color:white;border-radius:12px;padding:12px}
+form button{padding-inline:18px}
+.examples{font-size:12px;color:var(--muted);line-height:1.7;margin-top:14px}
+footer{text-align:center;color:#69869d;font-size:11px;margin-top:20px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="eyebrow">PERSONAL AI INTERFACE</div>
+  <h1>J.A.R.V.I.S.</h1>
+  <div class="sub">Mobile prototype · Version 0.1</div>
+</header>
+<div class="orb-wrap"><div class="orb"><span>✦</span></div></div>
+<div class="status" id="status">SYSTEM READY</div>
+<section class="panel">
+  <div class="label">ASSISTANT RESPONSE</div>
+  <div class="reply" id="reply">Hello. JARVIS prototype is online. Tap the microphone or type a command below.</div>
+  <div class="controls">
+    <button id="listen">🎙 Start listening</button>
+    <button id="mute" type="button">🔊 Voice on</button>
+  </div>
+  <form id="commandForm">
+    <input id="command" autocomplete="off" placeholder="Type a command…" aria-label="Type a command">
+    <button type="submit">Send</button>
+  </form>
+  <div class="examples">Try: “Hello Jarvis”, “What time is it?”, “What is today's date?”, “Help”, or “Open YouTube”.</div>
+</section>
+<footer>Microphone is used only after you tap Start listening. This prototype does not send commands to an AI service.</footer>
+</main>
+<script>
+const replyEl=document.getElementById('reply');
+const statusEl=document.getElementById('status');
+const listenBtn=document.getElementById('listen');
+const muteBtn=document.getElementById('mute');
+const input=document.getElementById('command');
+let voiceOn=true;
+function speak(text){
+  if(!voiceOn || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance=new SpeechSynthesisUtterance(text);
+  utterance.rate=1; utterance.pitch=1;
+  window.speechSynthesis.speak(utterance);
+}
+function respond(text){
+  const q=text.trim().toLowerCase();
+  if(!q) return;
+  let answer;
+  if(/\b(hello|hi|hey)\b/.test(q)) answer="Hello. JARVIS is ready. How can I help you?";
+  else if(q.includes('time')) answer="The time is "+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+".";
+  else if(q.includes('date') || q.includes('today')) answer="Today is "+new Date().toLocaleDateString([], {weekday:'long',year:'numeric',month:'long',day:'numeric'})+".";
+  else if(q.includes('help')) answer="You can ask for the time, today's date, say hello, or ask me to open YouTube. My AI brain is not connected yet.";
+  else if(q.includes('open youtube')) { answer="Opening YouTube in your browser."; window.open('https://www.youtube.com','_blank','noopener'); }
+  else answer="I heard: "+text+". I am currently a basic prototype. In the next steps, we will connect an AI brain so I can answer more questions.";
+  replyEl.textContent=answer; statusEl.textContent='COMMAND COMPLETE'; speak(answer);
+}
+document.getElementById('commandForm').addEventListener('submit',e=>{
+  e.preventDefault(); const value=input.value; input.value=''; respond(value);
+});
+muteBtn.addEventListener('click',()=>{
+  voiceOn=!voiceOn; muteBtn.textContent=voiceOn?'🔊 Voice on':'🔇 Voice off';
+  if(!voiceOn && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+});
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(SpeechRecognition){
+  const recognition=new SpeechRecognition();
+  recognition.lang='en-IN'; recognition.continuous=false; recognition.interimResults=false;
+  recognition.onstart=()=>{listenBtn.classList.add('listening');listenBtn.textContent='Listening…';statusEl.textContent='LISTENING — SPEAK NOW';};
+  recognition.onend=()=>{listenBtn.classList.remove('listening');listenBtn.textContent='🎙 Start listening';if(statusEl.textContent.startsWith('LISTENING'))statusEl.textContent='SYSTEM READY';};
+  recognition.onerror=()=>{statusEl.textContent='MICROPHONE ERROR — CHECK PERMISSION OR TYPE INSTEAD';};
+  recognition.onresult=e=>respond(e.results[0][0].transcript);
+  listenBtn.addEventListener('click',()=>{try{recognition.start();}catch(err){statusEl.textContent='PLEASE WAIT, THEN TRY AGAIN';}});
+}else{
+  listenBtn.addEventListener('click',()=>{statusEl.textContent='VOICE INPUT NOT AVAILABLE HERE — TYPE A COMMAND';});
+}
+</script>
+</body>
+</html>
